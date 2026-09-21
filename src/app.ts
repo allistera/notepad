@@ -1,4 +1,5 @@
 import { downloadFile } from "./download.ts";
+import { createEditor, type EditorHandle } from "./editor.ts";
 import { renderMarkdown } from "./markdown.ts";
 import { clearNote, loadNote, saveNote } from "./storage.ts";
 
@@ -23,13 +24,7 @@ const TEMPLATE = `
 	</div>
 </header>
 <main class="workspace">
-	<textarea
-		class="editor"
-		name="note"
-		aria-label="Note"
-		placeholder="Start writing… your notes auto-save every 2 seconds."
-		spellcheck="true"
-	></textarea>
+	<div class="editor" data-editor></div>
 	<article class="preview" data-preview hidden></article>
 </main>
 `;
@@ -46,13 +41,17 @@ export interface AppDependencies {
 	download?: typeof downloadFile;
 }
 
+export interface AppHandle {
+	editor: EditorHandle;
+}
+
 export function createApp(
 	root: HTMLElement,
 	{ download = downloadFile }: AppDependencies = {},
-): void {
+): AppHandle {
 	root.innerHTML = TEMPLATE;
 
-	const editor = query<HTMLTextAreaElement>(root, "textarea.editor");
+	const editorHost = query<HTMLElement>(root, "[data-editor]");
 	const preview = query<HTMLElement>(root, "[data-preview]");
 	const editButton = query<HTMLButtonElement>(root, '[data-action="edit"]');
 	const previewButton = query<HTMLButtonElement>(
@@ -80,7 +79,7 @@ export function createApp(
 
 	function saveNow(): void {
 		cancelAutosave();
-		saveNote(editor.value);
+		saveNote(editor.getValue());
 	}
 
 	function scheduleAutosave(): void {
@@ -90,7 +89,7 @@ export function createApp(
 
 	function showEditor(): void {
 		preview.hidden = true;
-		editor.hidden = false;
+		editor.setHidden(false);
 		editButton.setAttribute("aria-pressed", "true");
 		previewButton.setAttribute("aria-pressed", "false");
 		editor.focus();
@@ -98,30 +97,35 @@ export function createApp(
 
 	function showPreview(): void {
 		saveNow();
-		preview.innerHTML = renderMarkdown(editor.value);
-		editor.hidden = true;
+		preview.innerHTML = renderMarkdown(editor.getValue());
+		editor.setHidden(true);
 		preview.hidden = false;
 		editButton.setAttribute("aria-pressed", "false");
 		previewButton.setAttribute("aria-pressed", "true");
 	}
 
-	editor.value = loadNote();
-	editor.addEventListener("input", scheduleAutosave);
+	const editor = createEditor(editorHost, {
+		doc: loadNote(),
+		placeholder: "Start writing… your notes auto-save every 2 seconds.",
+		onChange: scheduleAutosave,
+	});
+
 	editButton.addEventListener("click", showEditor);
 	previewButton.addEventListener("click", showPreview);
 	clearButton.addEventListener("click", () => {
+		editor.setValue("");
 		cancelAutosave();
-		editor.value = "";
 		clearNote();
 		showEditor();
 	});
 	txtButton.addEventListener("click", () => {
-		download("note.txt", editor.value, "text/plain");
+		download("note.txt", editor.getValue(), "text/plain");
 	});
 	mdButton.addEventListener("click", () => {
-		download("note.md", editor.value, "text/markdown");
+		download("note.md", editor.getValue(), "text/markdown");
 	});
 	window.addEventListener("beforeunload", saveNow);
 
 	showEditor();
+	return { editor };
 }

@@ -1,24 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "./app.ts";
+import type { EditorHandle } from "./editor.ts";
 import { loadNote, saveNote } from "./storage.ts";
 
 function mount(download = vi.fn()) {
 	const root = document.createElement("div");
 	document.body.append(root);
-	createApp(root, { download });
-	const editor = root.querySelector<HTMLTextAreaElement>("textarea");
+	const { editor } = createApp(root, { download });
+	const editorDom = root.querySelector<HTMLElement>(".cm-editor");
+	const content = root.querySelector<HTMLElement>(".cm-content");
 	const preview = root.querySelector<HTMLElement>("[data-preview]");
 	const button = (name: string) =>
 		root.querySelector<HTMLButtonElement>(`button[data-action="${name}"]`);
-	if (!editor || !preview) {
+	if (!editorDom || !content || !preview) {
 		throw new Error("app did not render editor and preview");
 	}
-	return { root, editor, preview, button, download };
+	return { root, editor, editorDom, content, preview, button, download };
 }
 
-function type(editor: HTMLTextAreaElement, value: string) {
-	editor.value = value;
-	editor.dispatchEvent(new Event("input", { bubbles: true }));
+function type(editor: EditorHandle, value: string) {
+	editor.setValue(value);
 }
 
 describe("createApp", () => {
@@ -33,14 +34,14 @@ describe("createApp", () => {
 	});
 
 	it("focuses the editor on mount", () => {
-		const { editor } = mount();
-		expect(document.activeElement).toBe(editor);
+		const { content } = mount();
+		expect(document.activeElement).toBe(content);
 	});
 
 	it("loads the saved note into the editor", () => {
 		saveNote("saved text");
 		const { editor } = mount();
-		expect(editor.value).toBe("saved text");
+		expect(editor.getValue()).toBe("saved text");
 	});
 
 	it("autosaves two seconds after the last keystroke", () => {
@@ -53,18 +54,18 @@ describe("createApp", () => {
 	});
 
 	it("shows the editor and hides the preview by default", () => {
-		const { editor, preview, button } = mount();
-		expect(editor.hidden).toBe(false);
+		const { editorDom, preview, button } = mount();
+		expect(editorDom.hidden).toBe(false);
 		expect(preview.hidden).toBe(true);
 		expect(button("edit")?.getAttribute("aria-pressed")).toBe("true");
 		expect(button("preview")?.getAttribute("aria-pressed")).toBe("false");
 	});
 
 	it("renders markdown when switching to preview", () => {
-		const { editor, preview, button } = mount();
+		const { editor, editorDom, preview, button } = mount();
 		type(editor, "# Hello");
 		button("preview")?.click();
-		expect(editor.hidden).toBe(true);
+		expect(editorDom.hidden).toBe(true);
 		expect(preview.hidden).toBe(false);
 		expect(preview.innerHTML).toContain("<h1>Hello</h1>");
 		expect(button("preview")?.getAttribute("aria-pressed")).toBe("true");
@@ -78,19 +79,19 @@ describe("createApp", () => {
 	});
 
 	it("returns to the editor and refocuses it", () => {
-		const { editor, preview, button } = mount();
+		const { editorDom, content, preview, button } = mount();
 		button("preview")?.click();
 		button("edit")?.click();
-		expect(editor.hidden).toBe(false);
+		expect(editorDom.hidden).toBe(false);
 		expect(preview.hidden).toBe(true);
-		expect(document.activeElement).toBe(editor);
+		expect(document.activeElement).toBe(content);
 	});
 
 	it("clears the editor and the saved note", () => {
 		saveNote("old");
 		const { editor, button } = mount();
 		button("clear")?.click();
-		expect(editor.value).toBe("");
+		expect(editor.getValue()).toBe("");
 		expect(loadNote()).toBe("");
 		vi.advanceTimersByTime(2000);
 		expect(loadNote()).toBe("");
@@ -101,6 +102,14 @@ describe("createApp", () => {
 		type(editor, "plain");
 		button("download-txt")?.click();
 		expect(download).toHaveBeenCalledWith("note.txt", "plain", "text/plain");
+	});
+
+	it("highlights Markdown syntax in the editor once it is typed", () => {
+		const { root, editor } = mount();
+		type(editor, "just prose");
+		expect(root.querySelector(".md-heading")).toBeNull();
+		type(editor, "# A heading");
+		expect(root.querySelector(".md-heading")).not.toBeNull();
 	});
 
 	it("downloads the note as a .md file", () => {

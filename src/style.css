@@ -7,6 +7,11 @@
 	--muted: #8a8a86;
 	--accent: #111111;
 	--accent-text: #ffffff;
+	--selection: #d9e4f5;
+	--md-heading: #1d4ed8;
+	--md-link: #0f766e;
+	--md-code: #b45309;
+	--md-list: #7c3aed;
 	--font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 	--font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 	color-scheme: light dark;
@@ -22,6 +27,11 @@
 		--muted: #8c8c8c;
 		--accent: #ececec;
 		--accent-text: #111111;
+		--selection: #2f3d55;
+		--md-heading: #93c5fd;
+		--md-link: #5eead4;
+		--md-code: #fbbf24;
+		--md-list: #c4b5fd;
 	}
 }
 
@@ -127,22 +137,94 @@ body {
 .preview {
 	flex: 1;
 	min-width: 0;
-	padding: 1.5rem;
 	overflow: auto;
 }
 
-.editor {
-	border: none;
-	resize: none;
-	outline: none;
-	background: transparent;
-	color: inherit;
+.preview {
+	padding: 1.5rem;
+}
+
+.editor .cm-editor {
+	height: 100%;
 	font-family: var(--font-mono);
 	font-size: 1.05rem;
 	line-height: 1.6;
+	color: inherit;
+	background: transparent;
 }
 
-.editor::placeholder {
+.editor .cm-editor.cm-focused {
+	outline: none;
+}
+
+.editor .cm-scroller {
+	font-family: inherit;
+	line-height: inherit;
+}
+
+.editor .cm-content {
+	padding: 1.5rem 0;
+	caret-color: var(--text);
+}
+
+.editor .cm-line {
+	padding: 0 1.5rem;
+}
+
+.editor .cm-placeholder {
+	color: var(--muted);
+}
+
+.editor .cm-cursor {
+	border-left-color: var(--text);
+}
+
+.editor .cm-selectionBackground,
+.editor .cm-editor.cm-focused .cm-selectionBackground {
+	background: var(--selection);
+}
+
+.md-heading {
+	font-weight: 700;
+	color: var(--md-heading);
+}
+
+.md-strong {
+	font-weight: 700;
+}
+
+.md-emphasis {
+	font-style: italic;
+}
+
+.md-strikethrough {
+	text-decoration: line-through;
+}
+
+.md-link,
+.md-label {
+	color: var(--md-link);
+}
+
+.md-url {
+	color: var(--md-link);
+	text-decoration: underline;
+}
+
+.md-code {
+	color: var(--md-code);
+}
+
+.md-quote {
+	color: var(--muted);
+	font-style: italic;
+}
+
+.md-list {
+	color: var(--md-list);
+}
+
+.md-mark {
 	color: var(--muted);
 }
 

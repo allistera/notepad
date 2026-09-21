@@ -8,12 +8,17 @@ when you switch to Preview or leave the page.
 
 - Editor is focused as soon as the page loads.
 - Edit / Preview toggle: raw text by default, rendered Markdown on demand.
+- Markdown syntax is highlighted in the editor as soon as the text looks
+  like Markdown (headings, lists, links, code, emphasis); plain prose stays
+  uncoloured.
 - Clear the note, or download it as `note.txt` or `note.md`.
 - Light and dark colour schemes follow the operating system.
 
 ## Stack
 
 - [Vite](https://vite.dev) + TypeScript, no UI framework (plain DOM APIs).
+- [CodeMirror 6](https://codemirror.net) for the editor, with the
+  [Lezer Markdown](https://github.com/lezer-parser/markdown) parser for highlighting.
 - [marked](https://marked.js.org) renders Markdown; [DOMPurify](https://github.com/cure53/DOMPurify) sanitises the output.
 - [Biome](https://biomejs.dev) for linting and formatting.
 - [Vitest](https://vitest.dev) with jsdom for tests.
