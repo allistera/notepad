@@ -35,3 +35,10 @@ npm run lint       # Biome lint + format check
 npm run format     # apply Biome formatting
 npm run check      # lint, build and test in one go
 ```
+
+## Deployment
+
+Every push to `main` runs `.github/workflows/deploy.yml`, which lints, tests,
+builds and publishes `dist/` to GitHub Pages at
+<https://allistera.github.io/notepad/>. The `base` option in `vite.config.ts`
+matches that path; change it if the site moves.
