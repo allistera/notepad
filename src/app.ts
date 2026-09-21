@@ -1,5 +1,5 @@
 import { downloadFile } from "./download.ts";
-import { createEditor, type EditorHandle } from "./editor.ts";
+import { createEditor } from "./editor.ts";
 import { renderMarkdown } from "./markdown.ts";
 import { clearNote, loadNote, saveNote } from "./storage.ts";
 
@@ -41,14 +41,10 @@ export interface AppDependencies {
 	download?: typeof downloadFile;
 }
 
-export interface AppHandle {
-	editor: EditorHandle;
-}
-
 export function createApp(
 	root: HTMLElement,
 	{ download = downloadFile }: AppDependencies = {},
-): AppHandle {
+): void {
 	root.innerHTML = TEMPLATE;
 
 	const editorHost = query<HTMLElement>(root, "[data-editor]");
@@ -127,5 +123,4 @@ export function createApp(
 	window.addEventListener("beforeunload", saveNow);
 
 	showEditor();
-	return { editor };
 }

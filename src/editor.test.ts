@@ -44,15 +44,14 @@ describe("createEditor", () => {
 	});
 
 	it("does not highlight plain text", () => {
-		const { parent, editor } = mount("Just a plain sentence.");
-		expect(editor.isMarkdown()).toBe(false);
+		const { parent } = mount("Just a plain sentence.");
 		expect(parent.querySelector(".md-heading")).toBeNull();
+		expect(parent.querySelector(".md-mark")).toBeNull();
 	});
 
 	it("highlights Markdown once the text looks like Markdown", () => {
 		const { parent, editor } = mount("Just a plain sentence.");
 		editor.setValue("# Heading\n\nsome **bold** text");
-		expect(editor.isMarkdown()).toBe(true);
 		expect(parent.querySelector(".md-heading")).not.toBeNull();
 		expect(parent.querySelector(".md-strong")).not.toBeNull();
 	});
@@ -61,7 +60,6 @@ describe("createEditor", () => {
 		const { parent, editor } = mount("# Heading");
 		expect(parent.querySelector(".md-heading")).not.toBeNull();
 		editor.setValue("plain again");
-		expect(editor.isMarkdown()).toBe(false);
 		expect(parent.querySelector(".md-heading")).toBeNull();
 	});
 

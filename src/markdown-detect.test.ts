@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksLikeMarkdown } from "./detect.ts";
+import { looksLikeMarkdown } from "./markdown-detect.ts";
 
 describe("looksLikeMarkdown", () => {
 	it.each([

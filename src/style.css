@@ -11,7 +11,7 @@
 	--md-heading: #1d4ed8;
 	--md-link: #0f766e;
 	--md-code: #b45309;
-	--md-list: #7c3aed;
+	--content-inset: 1.5rem;
 	--font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 	--font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 	color-scheme: light dark;
@@ -31,7 +31,6 @@
 		--md-heading: #93c5fd;
 		--md-link: #5eead4;
 		--md-code: #fbbf24;
-		--md-list: #c4b5fd;
 	}
 }
 
@@ -141,7 +140,7 @@ body {
 }
 
 .preview {
-	padding: 1.5rem;
+	padding: var(--content-inset);
 }
 
 .editor .cm-editor {
@@ -163,12 +162,12 @@ body {
 }
 
 .editor .cm-content {
-	padding: 1.5rem 0;
+	padding: var(--content-inset) 0;
 	caret-color: var(--text);
 }
 
 .editor .cm-line {
-	padding: 0 1.5rem;
+	padding: 0 var(--content-inset);
 }
 
 .editor .cm-placeholder {
@@ -197,12 +196,7 @@ body {
 	font-style: italic;
 }
 
-.md-strikethrough {
-	text-decoration: line-through;
-}
-
-.md-link,
-.md-label {
+.md-link {
 	color: var(--md-link);
 }
 
@@ -213,15 +207,6 @@ body {
 
 .md-code {
 	color: var(--md-code);
-}
-
-.md-quote {
-	color: var(--muted);
-	font-style: italic;
-}
-
-.md-list {
-	color: var(--md-list);
 }
 
 .md-mark {

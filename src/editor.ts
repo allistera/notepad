@@ -10,7 +10,7 @@ import { EditorView, placeholder } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
 import { GFM, parser as markdownParser } from "@lezer/markdown";
 import { minimalSetup } from "codemirror";
-import { looksLikeMarkdown } from "./detect.ts";
+import { looksLikeMarkdown } from "./markdown-detect.ts";
 
 export interface EditorOptions {
 	doc: string;
@@ -23,30 +23,23 @@ export interface EditorHandle {
 	setValue(value: string): void;
 	focus(): void;
 	setHidden(hidden: boolean): void;
-	isMarkdown(): boolean;
 }
 
 const markdownHighlight = HighlightStyle.define([
 	{ tag: tags.heading, class: "md-heading" },
 	{ tag: tags.strong, class: "md-strong" },
 	{ tag: tags.emphasis, class: "md-emphasis" },
-	{ tag: tags.strikethrough, class: "md-strikethrough" },
 	{ tag: tags.link, class: "md-link" },
 	{ tag: tags.url, class: "md-url" },
 	{ tag: tags.monospace, class: "md-code" },
-	{ tag: tags.quote, class: "md-quote" },
-	{ tag: tags.list, class: "md-list" },
 	{ tag: tags.processingInstruction, class: "md-mark" },
 	{ tag: tags.contentSeparator, class: "md-mark" },
-	{ tag: tags.labelName, class: "md-label" },
 ]);
 
 // Built directly on the Lezer parser rather than @codemirror/lang-markdown,
 // which would also bundle the HTML, JavaScript and CSS parsers.
 const markdownLanguage = new Language(
-	defineLanguageFacet({
-		commentTokens: { block: { open: "<!--", close: "-->" } },
-	}),
+	defineLanguageFacet(),
 	markdownParser.configure(GFM),
 	[],
 	"markdown",
@@ -108,6 +101,5 @@ export function createEditor(
 		setHidden: (hidden) => {
 			view.dom.hidden = hidden;
 		},
-		isMarkdown: () => markdownMode,
 	};
 }

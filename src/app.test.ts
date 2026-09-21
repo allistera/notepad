@@ -1,25 +1,31 @@
+import { EditorView } from "@codemirror/view";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "./app.ts";
-import type { EditorHandle } from "./editor.ts";
 import { loadNote, saveNote } from "./storage.ts";
 
 function mount(download = vi.fn()) {
 	const root = document.createElement("div");
 	document.body.append(root);
-	const { editor } = createApp(root, { download });
+	createApp(root, { download });
 	const editorDom = root.querySelector<HTMLElement>(".cm-editor");
 	const content = root.querySelector<HTMLElement>(".cm-content");
 	const preview = root.querySelector<HTMLElement>("[data-preview]");
+	const view = editorDom ? EditorView.findFromDOM(editorDom) : null;
 	const button = (name: string) =>
 		root.querySelector<HTMLButtonElement>(`button[data-action="${name}"]`);
-	if (!editorDom || !content || !preview) {
+	if (!editorDom || !content || !preview || !view) {
 		throw new Error("app did not render editor and preview");
 	}
-	return { root, editor, editorDom, content, preview, button, download };
+	const editor = {
+		getValue: () => view.state.doc.toString(),
+	};
+	return { root, editor, editorDom, content, preview, button, download, view };
 }
 
-function type(editor: EditorHandle, value: string) {
-	editor.setValue(value);
+function type(view: EditorView, value: string) {
+	view.dispatch({
+		changes: { from: 0, to: view.state.doc.length, insert: value },
+	});
 }
 
 describe("createApp", () => {
@@ -45,8 +51,8 @@ describe("createApp", () => {
 	});
 
 	it("autosaves two seconds after the last keystroke", () => {
-		const { editor } = mount();
-		type(editor, "draft");
+		const { view } = mount();
+		type(view, "draft");
 		vi.advanceTimersByTime(1999);
 		expect(loadNote()).toBe("");
 		vi.advanceTimersByTime(1);
@@ -62,8 +68,8 @@ describe("createApp", () => {
 	});
 
 	it("renders markdown when switching to preview", () => {
-		const { editor, editorDom, preview, button } = mount();
-		type(editor, "# Hello");
+		const { view, editorDom, preview, button } = mount();
+		type(view, "# Hello");
 		button("preview")?.click();
 		expect(editorDom.hidden).toBe(true);
 		expect(preview.hidden).toBe(false);
@@ -72,8 +78,8 @@ describe("createApp", () => {
 	});
 
 	it("saves immediately when switching to preview", () => {
-		const { editor, button } = mount();
-		type(editor, "unsaved");
+		const { view, button } = mount();
+		type(view, "unsaved");
 		button("preview")?.click();
 		expect(loadNote()).toBe("unsaved");
 	});
@@ -98,23 +104,23 @@ describe("createApp", () => {
 	});
 
 	it("downloads the note as a .txt file", () => {
-		const { editor, button, download } = mount();
-		type(editor, "plain");
+		const { view, button, download } = mount();
+		type(view, "plain");
 		button("download-txt")?.click();
 		expect(download).toHaveBeenCalledWith("note.txt", "plain", "text/plain");
 	});
 
 	it("highlights Markdown syntax in the editor once it is typed", () => {
-		const { root, editor } = mount();
-		type(editor, "just prose");
+		const { root, view } = mount();
+		type(view, "just prose");
 		expect(root.querySelector(".md-heading")).toBeNull();
-		type(editor, "# A heading");
+		type(view, "# A heading");
 		expect(root.querySelector(".md-heading")).not.toBeNull();
 	});
 
 	it("downloads the note as a .md file", () => {
-		const { editor, button, download } = mount();
-		type(editor, "# md");
+		const { view, button, download } = mount();
+		type(view, "# md");
 		button("download-md")?.click();
 		expect(download).toHaveBeenCalledWith("note.md", "# md", "text/markdown");
 	});
