@@ -15,7 +15,7 @@ import { looksLikeMarkdown } from "./markdown-detect.ts";
 export interface EditorOptions {
 	doc: string;
 	placeholder: string;
-	onChange: (value: string) => void;
+	onChange: () => void;
 }
 
 export interface EditorHandle {
@@ -23,7 +23,12 @@ export interface EditorHandle {
 	setValue(value: string): void;
 	focus(): void;
 	setHidden(hidden: boolean): void;
+	destroy(): void;
 }
+
+// Serialising the document and running the Markdown heuristics is O(n), so
+// it runs once typing pauses rather than on every keystroke.
+export const DETECT_DELAY_MS = 250;
 
 const markdownHighlight = HighlightStyle.define([
 	{ tag: tags.heading, class: "md-heading" },
@@ -56,6 +61,19 @@ export function createEditor(
 ): EditorHandle {
 	const language = new Compartment();
 	let markdownMode = looksLikeMarkdown(options.doc);
+	let detectTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function detectMarkdown(): void {
+		detectTimer = undefined;
+		const shouldHighlight = looksLikeMarkdown(view.state.doc.toString());
+		if (shouldHighlight === markdownMode) {
+			return;
+		}
+		markdownMode = shouldHighlight;
+		view.dispatch({
+			effects: language.reconfigure(shouldHighlight ? markdownExtensions : []),
+		});
+	}
 
 	const view = new EditorView({
 		parent,
@@ -74,17 +92,9 @@ export function createEditor(
 					if (!update.docChanged) {
 						return;
 					}
-					const value = update.state.doc.toString();
-					const shouldHighlight = looksLikeMarkdown(value);
-					if (shouldHighlight !== markdownMode) {
-						markdownMode = shouldHighlight;
-						view.dispatch({
-							effects: language.reconfigure(
-								shouldHighlight ? markdownExtensions : [],
-							),
-						});
-					}
-					options.onChange(value);
+					clearTimeout(detectTimer);
+					detectTimer = setTimeout(detectMarkdown, DETECT_DELAY_MS);
+					options.onChange();
 				}),
 			],
 		}),
@@ -100,6 +110,10 @@ export function createEditor(
 		focus: () => view.focus(),
 		setHidden: (hidden) => {
 			view.dom.hidden = hidden;
+		},
+		destroy: () => {
+			clearTimeout(detectTimer);
+			view.destroy();
 		},
 	};
 }

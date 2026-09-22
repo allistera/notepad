@@ -1,3 +1,7 @@
+// Firefox can abort a download if the object URL is revoked before it has
+// been fetched, so the revoke is deferred rather than run synchronously.
+const REVOKE_DELAY_MS = 60_000;
+
 export function downloadFile(
 	filename: string,
 	content: string,
@@ -9,5 +13,5 @@ export function downloadFile(
 	anchor.href = url;
 	anchor.download = filename;
 	anchor.click();
-	URL.revokeObjectURL(url);
+	setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
 }

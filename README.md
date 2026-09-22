@@ -1,8 +1,9 @@
 # Notepad
 
 A full-screen, single-note text editor that lives entirely in the browser.
-Text is saved to `localStorage` two seconds after you stop typing, and again
-when you switch to Preview or leave the page.
+Text is saved to `localStorage` two seconds after you stop typing (and at
+least every ten seconds while you keep typing), and again when you switch to
+Preview, hide the tab or leave the page.
 
 ## Features
 
@@ -12,6 +13,10 @@ when you switch to Preview or leave the page.
   like Markdown (headings, lists, links, code, emphasis); plain prose stays
   uncoloured.
 - Clear the note, or download it as `note.txt` or `note.md`.
+- Open it in as many tabs as you like: a tab that has not been edited follows
+  whatever another tab saves, and only a tab with unsaved edits writes back.
+- If the browser refuses to save (storage full or disabled), the toolbar says
+  so instead of failing silently.
 - Light and dark colour schemes follow the operating system.
 
 ## Stack

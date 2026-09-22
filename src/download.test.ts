@@ -1,12 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { downloadFile } from "./download.ts";
 
 describe("downloadFile", () => {
-	afterEach(() => {
-		vi.restoreAllMocks();
+	beforeEach(() => {
+		vi.useFakeTimers();
 	});
 
-	it("triggers a download with the given filename and content", async () => {
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+		vi.unstubAllGlobals();
+	});
+
+	function stub() {
 		const createObjectURL = vi.fn((_blob: Blob) => "blob:mock");
 		const revokeObjectURL = vi.fn();
 		vi.stubGlobal("URL", {
@@ -20,6 +26,11 @@ describe("downloadFile", () => {
 		) {
 			clicked.push(this);
 		});
+		return { createObjectURL, revokeObjectURL, clicked };
+	}
+
+	it("triggers a download with the given filename and content", async () => {
+		const { createObjectURL, clicked } = stub();
 
 		downloadFile("note.txt", "hello", "text/plain");
 
@@ -33,6 +44,15 @@ describe("downloadFile", () => {
 		}
 		expect(blob.type).toBe("text/plain");
 		expect(await blob.text()).toBe("hello");
+	});
+
+	it("keeps the object URL alive until the browser has started the download", () => {
+		const { revokeObjectURL } = stub();
+
+		downloadFile("note.txt", "hello", "text/plain");
+
+		expect(revokeObjectURL).not.toHaveBeenCalled();
+		vi.runAllTimers();
 		expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock");
 	});
 });

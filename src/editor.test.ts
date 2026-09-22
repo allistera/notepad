@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createEditor } from "./editor.ts";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createEditor, DETECT_DELAY_MS } from "./editor.ts";
 
 function mount(doc = "") {
 	const parent = document.createElement("div");
@@ -16,6 +16,11 @@ function mount(doc = "") {
 describe("createEditor", () => {
 	beforeEach(() => {
 		document.body.innerHTML = "";
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
 	});
 
 	it("starts with the given document", () => {
@@ -27,7 +32,7 @@ describe("createEditor", () => {
 		const { editor, onChange } = mount();
 		editor.setValue("changed");
 		expect(editor.getValue()).toBe("changed");
-		expect(onChange).toHaveBeenCalledWith("changed");
+		expect(onChange).toHaveBeenCalledTimes(1);
 	});
 
 	it("focuses the editable content", () => {
@@ -49,17 +54,24 @@ describe("createEditor", () => {
 		expect(parent.querySelector(".md-mark")).toBeNull();
 	});
 
-	it("highlights Markdown once the text looks like Markdown", () => {
+	it("highlights a Markdown document from the start", () => {
+		const { parent } = mount("# Heading");
+		expect(parent.querySelector(".md-heading")).not.toBeNull();
+	});
+
+	it("defers Markdown detection until typing pauses", () => {
 		const { parent, editor } = mount("Just a plain sentence.");
 		editor.setValue("# Heading\n\nsome **bold** text");
+		expect(parent.querySelector(".md-heading")).toBeNull();
+		vi.advanceTimersByTime(DETECT_DELAY_MS);
 		expect(parent.querySelector(".md-heading")).not.toBeNull();
 		expect(parent.querySelector(".md-strong")).not.toBeNull();
 	});
 
 	it("stops highlighting when the text no longer looks like Markdown", () => {
 		const { parent, editor } = mount("# Heading");
-		expect(parent.querySelector(".md-heading")).not.toBeNull();
 		editor.setValue("plain again");
+		vi.advanceTimersByTime(DETECT_DELAY_MS);
 		expect(parent.querySelector(".md-heading")).toBeNull();
 	});
 
@@ -70,5 +82,13 @@ describe("createEditor", () => {
 		expect(dom?.hidden).toBe(true);
 		editor.setHidden(false);
 		expect(dom?.hidden).toBe(false);
+	});
+
+	it("removes itself from the DOM and drops pending detection on destroy", () => {
+		const { parent, editor } = mount();
+		editor.setValue("# Heading");
+		editor.destroy();
+		expect(parent.querySelector(".cm-editor")).toBeNull();
+		expect(() => vi.runAllTimers()).not.toThrow();
 	});
 });

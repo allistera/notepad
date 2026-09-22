@@ -11,6 +11,7 @@
 	--md-heading: #1d4ed8;
 	--md-link: #0f766e;
 	--md-code: #b45309;
+	--danger: #b91c1c;
 	--content-inset: 1.5rem;
 	--font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 	--font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -31,6 +32,7 @@
 		--md-heading: #93c5fd;
 		--md-link: #5eead4;
 		--md-code: #fbbf24;
+		--danger: #fca5a5;
 	}
 }
 
@@ -117,6 +119,18 @@ body {
 	color: var(--accent-text);
 }
 
+.status {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+
+.status:not(:empty) {
+	color: var(--danger);
+}
+
 .actions {
 	display: flex;
 	gap: 0.5rem;
@@ -141,6 +155,8 @@ body {
 
 .preview {
 	padding: var(--content-inset);
+	font-size: 1.05rem;
+	line-height: 1.6;
 }
 
 .editor .cm-editor {
@@ -211,11 +227,6 @@ body {
 
 .md-mark {
 	color: var(--muted);
-}
-
-.preview {
-	font-size: 1.05rem;
-	line-height: 1.6;
 }
 
 .preview > :first-child {
